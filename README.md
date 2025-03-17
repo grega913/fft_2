@@ -4,7 +4,7 @@
 
 ## Instead of Flask, here we have FastApi
 
-- **Sessions** we are not fastapi_sessions for sessions
+- **Sessions** we are using fastapi_sessions for sessions
 - **Async support for routes** of the box - all routes are defined as async functions
 
 by myFlaskFirebaseTemplate i mean copy of mister Aaron Dunn's work
