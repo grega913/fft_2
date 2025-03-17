@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from pydantic import BaseModel
 import uvicorn
 import time
+import os
 
 #templates
 from fastapi import FastAPI, Request, WebSocket, Depends, APIRouter, HTTPException, Body, status, Response, Path
@@ -22,6 +23,25 @@ from firebase_admin import credentials, firestore, auth
 
 from uuid import UUID, uuid4
 from helperz import cookie, backend, verifier, SessionData, ModelName, Item
+
+import stripe
+
+
+from dotenv import load_dotenv
+load_dotenv()
+
+YOUR_DOMAIN = 'http://localhost:8000'
+
+# Stripe settings
+stripe_keys = {
+    "secret_key": os.environ["STRIPE_SECRET_KEY"],
+    "publishable_key": os.environ["STRIPE_PUBLISHABLE_KEY"],
+    "endpoint_secret": os.environ["STRIPE_ENDPOINT_SECRET"]
+}
+
+ic(stripe_keys["secret_key"])
+
+stripe.api_key = stripe_keys["secret_key"]
 
 # endregion
 
@@ -254,6 +274,64 @@ async def logout(response: Response, session_id: UUID = Depends(cookie)):
 # endregion
 
 
+# region Stripe
+
+@app.get("/stripe123", response_class=HTMLResponse)
+async def stripe123(request: Request):
+    return templates.TemplateResponse(request=request, name="stripe123.html")
+
+@app.get("/stripe_success", response_class=HTMLResponse)
+async def stripe_success(request: Request):
+    return templates.TemplateResponse(request=request, name="stripe_success.html")
+
+
+@app.get("/stripe_cancelled", response_class=HTMLResponse)
+async def stripe_cancelled(request: Request):
+    return templates.TemplateResponse(request=request, name="stripe_cancelled.html")
+
+@app.get("/stripe_checkout", response_class=HTMLResponse)
+async def stripe_checkout(request: Request):
+    return templates.TemplateResponse(request=request, name="stripe_checkout.html")
+
+@app.get("/stripe_checkout2", response_class=HTMLResponse)
+async def stripe_checkout2(request: Request):
+    return templates.TemplateResponse(request=request, name="stripe_checkout2.html")
+
+@app.get("/stripe_config")
+def get_publishable_key():
+    stripe_config = {"publicKey": stripe_keys["publishable_key"]}
+    return JSONResponse(stripe_config)
+
+
+
+@app.post('/create-checkout-session')
+def create_checkout_session():
+
+    try:
+        checkout_session = stripe.checkout.Session.create(
+            line_items=[
+                {
+                    # Provide the exact Price ID (for example, pr_1234) of the product you want to sell
+                    'price': 'price_1R17DJB4j30g5cZMjWNlbREF',
+                    'quantity': 1,
+                },
+            ],
+            mode='payment',
+            success_url=YOUR_DOMAIN + '/stripe_success',
+            cancel_url=YOUR_DOMAIN + '/stripe_cancel'
+        )
+
+        ic(checkout_session)
+
+        return JSONResponse({"sessionId": checkout_session.id})
+
+        
+
+    except Exception as e:
+        return str(e)
+
+
+# endregion
 
 
 

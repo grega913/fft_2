@@ -7,3 +7,4 @@ uvicorn
 aider-chat
 flask
 firebase_admin
+stripe
